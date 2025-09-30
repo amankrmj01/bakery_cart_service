@@ -1,0 +1,418 @@
+# Test 1: Service Health Check
+
+### Test 1a: Cart Service Health
+GET http://localhost:8086/api/health
+Accept: application/json
+
+# Expected Response:
+# {
+#   "status": "UP",
+#   "service": "bakery-cart-service",
+#   "timestamp": "2025-09-28T19:05:00",
+#   "version": "1.0.0",
+#   "database": "UP",
+#   "databaseUrl": "jdbc:postgresql://localhost:5436/bakery_carts",
+#   "redis": "UP"
+# }
+
+### Test 1b: Service Info
+GET http://localhost:8086/api/info
+Accept: application/json
+
+# Expected Response:
+# {
+#   "serviceName": "Bakery Cart Service",
+#   "description": "Shopping cart management and session handling service",
+#   "version": "1.0.0",
+#   "features": {
+#     "carts": "User and guest cart management",
+#     "persistence": "Redis caching with PostgreSQL persistence",
+#     "validation": "Real-time stock and price validation",
+#     "checkout": "Seamless order creation integration",
+#     "analytics": "Cart abandonment and conversion tracking"
+#   },
+#   "endpoints": {
+#     "carts": "/api/carts",
+#     "items": "/api/cart-items"
+#   }
+# }
+
+# Test 2: Create Carts
+
+### Test 2a: Create cart for user
+POST http://localhost:8086/api/carts
+Content-Type: application/json
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+
+# Expected Response:
+# {
+#   "id": "cart-uuid-here",
+#   "userId": "123e4567-e89b-12d3-a456-426614174000",
+#   "sessionId": null,
+#   "status": "ACTIVE",
+#   "customerName": "John Doe",
+#   "customerEmail": "john.doe@example.com",
+#   "subtotal": 0.00,
+#   "taxAmount": 0.00,
+#   "discountAmount": 0.00,
+#   "totalAmount": 0.00,
+#   "itemCount": 0,
+#   "totalQuantity": 0,
+#   "currencyCode": "USD",
+#   "deliveryType": "PICKUP",
+#   "items": [],
+#   "savedItems": [],
+#   "isEmpty": true,
+#   "isExpired": false,
+#   "isGuest": false,
+#   "hasStockIssues": false,
+#   "hasPriceChanges": false,
+#   "source": "WEB",
+#   "deviceType": "DESKTOP",
+#   "createdAt": "2025-09-28T19:05:00"
+# }
+{
+  "userId": "123e4567-e89b-12d3-a456-426614174000",
+  "customerName": "John Doe",
+  "customerEmail": "john.doe@example.com",
+  "currencyCode": "USD",
+  "deliveryType": "PICKUP",
+  "source": "WEB",
+  "deviceType": "DESKTOP"
+}
+
+### Test 2b: Create guest cart
+POST http://localhost:8086/api/carts
+Content-Type: application/json
+X-Session-Id: guest-session-12345
+
+{
+  "sessionId": "guest-session-12345",
+  "currencyCode": "USD",
+  "source": "WEB",
+  "deviceType": "MOBILE"
+}
+
+### Test 3: Get or Create Cart
+
+### Test 3a: Get or create cart for user
+GET http://localhost:8086/api/carts/user/123e4567-e89b-12d3-a456-426614174000
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+### Test 3b: Get or create cart for session
+GET http://localhost:8086/api/carts/session/guest-session-12345
+X-Session-Id: guest-session-12345
+
+### Test 4: Add Items to Cart
+
+### Test 4a: Add first item (use a product ID from Product Service)
+POST http://localhost:8086/api/carts/CART_ID_HERE/items
+Content-Type: application/json
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+{
+  "productId": "f9ff42f7-4a43-46c9-b06c-37e92d441ab5",
+  "quantity": 2,
+  "specialInstructions": "Extra frosting please",
+  "addedFrom": "PRODUCT_PAGE"
+}
+
+### Test 4b: Add second item
+POST http://localhost:8086/api/carts/CART_ID_HERE/items
+Content-Type: application/json
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+
+# Expected Response:
+# {
+#   "id": "cart-uuid-here",
+#   "userId": "123e4567-e89b-12d3-a456-426614174000",
+#   "status": "ACTIVE",
+#   "subtotal": 32.97,
+#   "taxAmount": 2.64,
+#   "totalAmount": 35.61,
+#   "itemCount": 2,
+#   "totalQuantity": 3,
+#   "items": [
+#     {
+#       "id": "item-uuid-1",
+#       "productId": "f9ff42f7-4a43-46c9-b06c-37e92d441ab5",
+#       "productName": "Chocolate Cupcake",
+#       "quantity": 2,
+#       "unitPrice": 4.99,
+#       "totalPrice": 9.98,
+#       "specialInstructions": "Extra frosting please",
+#       "isAvailable": true,
+#       "addedFrom": "PRODUCT_PAGE"
+#     },
+#     {
+#       "id": "item-uuid-2",
+#       "productId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+#       "productName": "Apple Pie Slice",
+#       "quantity": 1,
+#       "unitPrice": 22.99,
+#       "totalPrice": 22.99,
+#       "isAvailable": true,
+#       "addedFrom": "CATEGORY_PAGE"
+#     }
+#   ],
+#   "isEmpty": false,
+#   "isGuest": false
+# }
+
+{
+  "productId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  "quantity": 1,
+  "addedFrom": "CATEGORY_PAGE"
+}
+
+### Test 5: Cart Item Operations
+
+### Test 5a: Update item quantity
+PUT http://localhost:8086/api/carts/CART_ID_HERE/items/ITEM_ID_HERE
+Content-Type: application/json
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+{
+  "quantity": 3,
+  "specialInstructions": "Extra frosting and sprinkles"
+}
+
+### Test 5b: Save item for later
+POST http://localhost:8086/api/cart-items/ITEM_ID_HERE/save-for-later
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+### Test 5c: Move item back to cart
+POST http://localhost:8086/api/cart-items/ITEM_ID_HERE/move-to-cart
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+### Test 5d: Remove item from cart
+DELETE http://localhost:8086/api/carts/CART_ID_HERE/items/ITEM_ID_HERE
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+### Test 6: Cart Management
+
+### Test 6a: Update cart details
+PATCH http://localhost:8086/api/carts/CART_ID_HERE
+Content-Type: application/json
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+{
+  "customerName": "John Smith",
+  "deliveryType": "DELIVERY",
+  "deliveryAddress": "123 Main St, City, State 12345",
+  "specialInstructions": "Please ring doorbell",
+  "discountCode": "SAVE10"
+}
+
+### Test 6b: Get cart by ID
+GET http://localhost:8086/api/carts/CART_ID_HERE
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+### Test 6c: Clear cart
+DELETE http://localhost:8086/api/carts/CART_ID_HERE/items
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+# Test 7: Cart Merging (User Login Scenario)
+
+### Test 7a: Create guest cart with items first
+POST http://localhost:8086/api/carts
+Content-Type: application/json
+X-Session-Id: guest-merge-session
+
+{
+  "sessionId": "guest-merge-session",
+  "source": "WEB"
+}
+
+### Add items to guest cart
+POST http://localhost:8086/api/carts/GUEST_CART_ID/items
+Content-Type: application/json
+X-Session-Id: guest-merge-session
+
+{
+  "productId": "f9ff42f7-4a43-46c9-b06c-37e92d441ab5",
+  "quantity": 1
+}
+
+### Test 7b: Merge guest cart into user cart
+POST http://localhost:8086/api/carts/merge
+Content-Type: application/json
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+{
+  "sourceCartId": "GUEST_CART_ID",
+  "targetCartId": "USER_CART_ID",
+  "deleteSourceCart": true,
+  "handleDuplicates": true
+}
+
+### Test 8: Save Cart for Later
+
+### Test 8a: Save cart for later
+POST http://localhost:8086/api/carts/CART_ID_HERE/save
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+### Test 9: Checkout Cart
+
+### Test 9a: Checkout cart (creates order)
+POST http://localhost:8086/api/carts/CART_ID_HERE/checkout
+Content-Type: application/json
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+
+# Expected Response:
+# {
+#   "cart": {
+#     "id": "cart-uuid-here",
+#     "status": "CONVERTED",
+#     "convertedAt": "2025-09-28T19:05:00",
+#     "convertedOrderId": "order-uuid-here"
+#   },
+#   "order": {
+#     "id": "order-uuid-here",
+#     "orderNumber": "ORD-20250928-001",
+#     "status": "PENDING",
+#     "totalAmount": 35.61
+#   }
+# }
+{
+  "customerName": "John Doe",
+  "customerEmail": "john.doe@example.com",
+  "customerPhone": "+1-555-0123",
+  "deliveryType": "PICKUP",
+  "specialInstructions": "Please have ready by 2 PM",
+  "paymentMethod": "CARD",
+  "cardLastFour": "4242",
+  "cardBrand": "VISA",
+  "cardType": "CREDIT"
+}
+
+### Test 10: Cart Item Details
+
+### Test 10a: Get cart items
+GET http://localhost:8086/api/cart-items/cart/CART_ID_HERE
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+### Test 10b: Get saved items
+GET http://localhost:8086/api/cart-items/cart/CART_ID_HERE/saved
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+### Test 10c: Get specific cart item
+GET http://localhost:8086/api/cart-items/ITEM_ID_HERE
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+# Test 11: Admin Operations
+
+### Test 11a: Get all carts (Admin only)
+GET http://localhost:8086/api/carts?page=0&size=10
+X-User-Role: ADMIN
+
+### Test 11b: Get carts by status
+GET http://localhost:8086/api/carts/status/ACTIVE
+X-User-Role: ADMIN
+
+### Test 11c: Get user's all carts
+GET http://localhost:8086/api/carts/user/123e4567-e89b-12d3-a456-426614174000/all
+X-User-Role: ADMIN
+
+# Test 12: Cart Statistics (Admin)
+
+### Test 12a: Get cart statistics
+GET http://localhost:8086/api/carts/statistics?startDate=2025-09-01T00:00:00&endDate=2025-09-30T23:59:59
+X-User-Role: ADMIN
+
+# Expected Response:
+# {
+#   "totalCarts": 15,
+#   "activeCarts": 8,
+#   "abandonedCarts": 3,
+#   "convertedCarts": 4,
+#   "averageCartValue": 28.50,
+#   "averageItemCount": 2.3,
+#   "conversionRate": 26.7,
+#   "dailyStats": [...],
+#   "sourceStats": [...],
+#   "dateRange": {
+#     "startDate": "2025-09-01T00:00:00",
+#     "endDate": "2025-09-30T23:59:59"
+#   }
+# }
+
+# Test 13: Through API Gateway
+
+### Test 13a: Create cart through Gateway
+POST http://localhost:8080/api/carts
+Content-Type: application/json
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+{
+  "userId": "123e4567-e89b-12d3-a456-426614174000",
+  "customerName": "Jane Doe",
+  "customerEmail": "jane.doe@example.com"
+}
+
+### Test 13b: Add item through Gateway
+POST http://localhost:8080/api/carts/CART_ID_HERE/items
+Content-Type: application/json
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+{
+  "productId": "f9ff42f7-4a43-46c9-b06c-37e92d441ab5",
+  "quantity": 1
+}
+
+### Test 14: Error Scenarios
+
+### Test 14a: Invalid cart data
+POST http://localhost:8086/api/carts
+Content-Type: application/json
+
+
+# Expected Response: 400 Bad Request (validation error)
+{
+  "customerEmail": "invalid-email"
+}
+
+### Test 14b: Access control (should return 403)
+GET http://localhost:8086/api/carts/different-user-cart-id
+X-User-Id: 123e4567-e89b-12d3-a456-426614174000
+X-User-Role: USER
+
+# Expected Response: 403 Forbidden
+
+### Test 14c: Non-existent cart
+GET http://localhost:8086/api/carts/00000000-0000-0000-0000-000000000000
+
+# Expected Response: 404 Not Found
+
+### Test 14d: Invalid item addition
+POST http://localhost:8086/api/carts/CART_ID_HERE/items
+Content-Type: application/json
+
+# Expected Response: 400 Bad Request (validation error)
+
+{
+  "productId": "invalid-uuid",
+  "quantity": -1
+}
