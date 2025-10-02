@@ -3,6 +3,7 @@ package com.shah_s.bakery_cart_service.controller;
 import com.shah_s.bakery_cart_service.dto.*;
 import com.shah_s.bakery_cart_service.entity.Cart;
 import com.shah_s.bakery_cart_service.service.CartService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,9 @@ public class CartController {
 
     @Autowired
     private CartService cartService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     // Create cart
     @PostMapping
@@ -91,8 +95,13 @@ public class CartController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        CartResponse cart = cartService.getOrCreateCartForUser(userId);
-
+        Object result = cartService.getOrCreateCartForUser(userId);
+        CartResponse cart = CartService.convertIfMap(result, objectMapper);
+        if (cart == null) {
+            logger.error("Failed to convert cached value to CartResponse for user: {}", userId);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(null);
+        }
         logger.info("Cart retrieved/created for user: {}", userId);
         return ResponseEntity.ok(cart);
     }

@@ -45,7 +45,6 @@ Content-Type: application/json
 X-User-Id: 123e4567-e89b-12d3-a456-426614174000
 X-User-Role: USER
 
-
 # Expected Response:
 # {
 #   "id": "cart-uuid-here",
@@ -109,13 +108,13 @@ X-Session-Id: guest-session-12345
 ### Test 4: Add Items to Cart
 
 ### Test 4a: Add first item (use a product ID from Product Service)
-POST http://localhost:8086/api/carts/CART_ID_HERE/items
+POST http://localhost:8086/api/carts/5e7b3319-1be7-41b5-8654-5244db004db8/items
 Content-Type: application/json
 X-User-Id: 123e4567-e89b-12d3-a456-426614174000
 X-User-Role: USER
 
 {
-  "productId": "f9ff42f7-4a43-46c9-b06c-37e92d441ab5",
+  "productId": "863cb939-afcc-4d5d-a38d-671d4019bbc2",
   "quantity": 2,
   "specialInstructions": "Extra frosting please",
   "addedFrom": "PRODUCT_PAGE"
@@ -174,7 +173,7 @@ X-User-Role: USER
 ### Test 5: Cart Item Operations
 
 ### Test 5a: Update item quantity
-PUT http://localhost:8086/api/carts/CART_ID_HERE/items/ITEM_ID_HERE
+PUT http://localhost:8086/api/carts/5e7b3319-1be7-41b5-8654-5244db004db8/items/3452da54-2046-404a-88f5-f5487cf582b9
 Content-Type: application/json
 X-User-Id: 123e4567-e89b-12d3-a456-426614174000
 X-User-Role: USER
@@ -195,7 +194,7 @@ X-User-Id: 123e4567-e89b-12d3-a456-426614174000
 X-User-Role: USER
 
 ### Test 5d: Remove item from cart
-DELETE http://localhost:8086/api/carts/CART_ID_HERE/items/ITEM_ID_HERE
+DELETE http://localhost:8086/api/carts/CART_ID_HERE/items/3452da54-2046-404a-88f5-f5487cf582b9
 X-User-Id: 123e4567-e89b-12d3-a456-426614174000
 X-User-Role: USER
 
@@ -216,7 +215,7 @@ X-User-Role: USER
 }
 
 ### Test 6b: Get cart by ID
-GET http://localhost:8086/api/carts/CART_ID_HERE
+GET http://localhost:8086/api/carts/5e7b3319-1be7-41b5-8654-5244db004db8
 X-User-Id: 123e4567-e89b-12d3-a456-426614174000
 X-User-Role: USER
 
@@ -270,7 +269,7 @@ X-User-Role: USER
 ### Test 9: Checkout Cart
 
 ### Test 9a: Checkout cart (creates order)
-POST http://localhost:8086/api/carts/CART_ID_HERE/checkout
+POST http://localhost:8086/api/carts/5e7b3319-1be7-41b5-8654-5244db004db8/checkout
 Content-Type: application/json
 X-User-Id: 123e4567-e89b-12d3-a456-426614174000
 X-User-Role: USER
@@ -306,7 +305,7 @@ X-User-Role: USER
 ### Test 10: Cart Item Details
 
 ### Test 10a: Get cart items
-GET http://localhost:8086/api/cart-items/cart/CART_ID_HERE
+GET http://localhost:8086/api/cart-items/cart/5e7b3319-1be7-41b5-8654-5244db004db8
 X-User-Id: 123e4567-e89b-12d3-a456-426614174000
 X-User-Role: USER
 

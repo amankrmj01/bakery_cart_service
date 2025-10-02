@@ -107,16 +107,33 @@ public class CartService {
     @Transactional(readOnly = true)
     public CartResponse getCartById(UUID cartId) {
         logger.debug("Fetching cart by ID: {}", cartId);
-
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartServiceException("Cart not found with ID: " + cartId));
-
-        // Validate cart items if enabled
         if (checkPriceOnView) {
             validateCartItems(cart);
         }
+        CartResponse response = CartResponse.from(cart);
+        return convertIfMap(response, objectMapper);
+    }
 
-        return CartResponse.from(cart);
+    // Utility to convert LinkedHashMap to CartResponse
+    public static CartResponse convertIfMap(Object obj, ObjectMapper objectMapper) {
+        if (obj instanceof java.util.LinkedHashMap) {
+            try {
+                // Remove '@class' field if present
+                Map<?, ?> map = (Map<?, ?>) obj;
+                if (map.containsKey("@class")) {
+                    Map<Object, Object> cleaned = new java.util.LinkedHashMap<>(map);
+                    cleaned.remove("@class");
+                    return objectMapper.convertValue(cleaned, CartResponse.class);
+                }
+                return objectMapper.convertValue(obj, CartResponse.class);
+            } catch (Exception e) {
+                LoggerFactory.getLogger(CartService.class).error("Failed to convert cached map to CartResponse", e);
+                return null;
+            }
+        }
+        return (CartResponse) obj;
     }
 
     // Get or create cart for user
@@ -124,19 +141,18 @@ public class CartService {
     @Transactional(readOnly = true)
     public CartResponse getOrCreateCartForUser(UUID userId) {
         logger.debug("Getting or creating cart for user: {}", userId);
-
         Optional<Cart> existingCart = cartRepository.findActiveCartByUserId(userId);
         if (existingCart.isPresent()) {
             Cart cart = existingCart.get();
             if (checkPriceOnView) {
                 validateCartItems(cart);
             }
-            return CartResponse.from(cart);
+            CartResponse response = CartResponse.from(cart);
+            return convertIfMap(response, objectMapper);
         }
-
-        // Create new cart
         CartRequest request = new CartRequest(userId, null);
-        return createCart(request);
+        CartResponse response = createCart(request);
+        return convertIfMap(response, objectMapper);
     }
 
     // Get or create cart for session
@@ -144,19 +160,18 @@ public class CartService {
     @Transactional(readOnly = true)
     public CartResponse getOrCreateCartForSession(String sessionId) {
         logger.debug("Getting or creating cart for session: {}", sessionId);
-
         Optional<Cart> existingCart = cartRepository.findActiveCartBySessionId(sessionId);
         if (existingCart.isPresent()) {
             Cart cart = existingCart.get();
             if (checkPriceOnView) {
                 validateCartItems(cart);
             }
-            return CartResponse.from(cart);
+            CartResponse response = CartResponse.from(cart);
+            return convertIfMap(response, objectMapper);
         }
-
-        // Create new cart
         CartRequest request = new CartRequest(sessionId);
-        return createCart(request);
+        CartResponse response = createCart(request);
+        return convertIfMap(response, objectMapper);
     }
 
     // Add item to cart
